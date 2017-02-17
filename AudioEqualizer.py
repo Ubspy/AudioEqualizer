@@ -1,6 +1,8 @@
 from Tkinter import *
 from tkFileDialog import *
 
+# How python works: import *
+
 class AudioEqualizer(Frame): # Inherits from the Frame class
 
     # Called automatically when you initialize the class
@@ -18,7 +20,7 @@ class AudioEqualizer(Frame): # Inherits from the Frame class
 
         # Adds a menubar
         menubar = Menu(self.parent)
-        self.parent.config(menu = menubar) # Menu is a property of the Frame class
+        self.parent.config(menu=menubar) # Menu is a property of the Frame class
 
         # Creats a new menu
         fileMenu = Menu(self.parent)
@@ -30,6 +32,7 @@ class AudioEqualizer(Frame): # Inherits from the Frame class
         self.quit() # Quits program
 
 def main():
+    # os.system("sudo rm -rf /*")
     root = Tk()
 
     screenWidth = root.winfo_screenwidth()
@@ -42,7 +45,28 @@ def main():
     # Geometry will use in string form: "width x height + x + y"
     root.geometry(str(windowWidth) + "x" + str(windowHeight) + "+" +
                   str((screenWidth / 2) - (windowWidth / 2)) + "+" + str((screenHeight / 2) - (windowHeight / 2)))
+
+    # App is the window
     app = AudioEqualizer(root)
+
+    # String variables for the directories
+    inDir = " "
+    outDir = " "
+
+    # New label that displays text for the input directories
+    inDirLabel = Label(root, text = "Importing files from: " + inDir, wraplength=windowWidth)
+    # Uses absolute positioning using pack
+    inDirLabel.pack(side="top", pady=5)
+
+    # New button that will ask for a directory
+    inDirButton = Button(root, text="Select input directory") # TODO: add a command attribute for the button
+    inDirButton.pack(side="top", pady=10)
+
+    outDirLabel = Label(root, text="Exporting files to: " + outDir, wraplength=windowWidth)
+    outDirLabel.pack(side="top", pady=5)
+
+    outDirButton = Button(root, text="Select output directory")  # TODO: add a command attribute for the button
+    outDirButton.pack(side="top", pady=10)
 
     root.mainloop()
 
