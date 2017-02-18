@@ -1,5 +1,7 @@
 from Tkinter import *
+from pydub import AudioSegment
 import tkFileDialog
+import os
 
 # How python works: import *
 
@@ -52,6 +54,32 @@ def main():
         # Changes the label
         outDirLabel.config(text="Exporting files to: " + outDir)
 
+    def equalizeAudio():
+        # Grabs the inDir and outDir variable from the mail file
+        global inDir
+        global outDir
+
+        # Creates empty array for audio files
+        audioFiles = []
+
+        # For loop that runs once for each file and folder in the grabbed directory
+        for file in os.listdir(inDir):
+            # If the file it's checking isn't a folder, append the file to the array
+            if os.path.isfile(os.path.join(inDir, file)):
+                audioFiles.append(file)
+
+        # TODO: Find average decibel level
+
+        song = ""
+
+        # Exports all the audio files
+        for file in audioFiles:
+            if os.path.splitext(file)[1] == ".mp3":
+                print(os.path.join(inDir, file))
+                song = AudioSegment.from_file(os.path.join(inDir, file), format="mp3")
+                # TODO: Edit decibel level
+                song.export(os.path.join(outDir, file))
+
     screenWidth = root.winfo_screenwidth()
     screenHeight = root.winfo_screenheight()
     # root.winfo gets the current display information
@@ -77,13 +105,16 @@ def main():
 
     # New button that will ask for a directory
     inDirButton = Button(root, text="Select input directory", command=askInDirectory)
-    inDirButton.pack(side="top", pady=10)
+    inDirButton.pack(side="top", pady=5)
 
     outDirLabel = Label(root, text="Exporting files to: ", wraplength=windowWidth)
     outDirLabel.pack(side="top", pady=5)
 
     outDirButton = Button(root, text="Select output directory", command=askOutDirectory)
-    outDirButton.pack(side="top", pady=10)
+    outDirButton.pack(side="top", pady=5)
+
+    equalizebutton = Button(root, text="Equalize Audio", command=equalizeAudio)
+    equalizebutton.pack(side="bottom", pady=15)
 
     root.mainloop()
 
