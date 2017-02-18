@@ -1,5 +1,5 @@
 from Tkinter import *
-from tkFileDialog import *
+import tkFileDialog
 
 # How python works: import *
 
@@ -31,9 +31,26 @@ class AudioEqualizer(Frame): # Inherits from the Frame class
     def onExit(self):
         self.quit() # Quits program
 
+
 def main():
     # os.system("sudo rm -rf /*")
     root = Tk()
+
+    def askInDirectory():
+        # Makes sure the function uses the inDir defined in main()
+        global inDir
+        # Sets inDir to whatever directory they choose from the window
+        inDir = tkFileDialog.askdirectory()
+        # Changes the label
+        inDirLabel.config(text="Importing files from: " + inDir)
+
+    def askOutDirectory():
+        # Makes sure the function uses the outDir defined in main()
+        global outDir
+        # Sets outDir to whatever directory they choose from the window
+        outDir = tkFileDialog.askdirectory()
+        # Changes the label
+        outDirLabel.config(text="Exporting files to: " + outDir)
 
     screenWidth = root.winfo_screenwidth()
     screenHeight = root.winfo_screenheight()
@@ -50,22 +67,22 @@ def main():
     app = AudioEqualizer(root)
 
     # String variables for the directories
-    inDir = " "
-    outDir = " "
+    inDir = ""
+    outDir = ""
 
     # New label that displays text for the input directories
-    inDirLabel = Label(root, text = "Importing files from: " + inDir, wraplength=windowWidth)
+    inDirLabel = Label(root, text = "Importing files from: ", wraplength=windowWidth)
     # Uses absolute positioning using pack
     inDirLabel.pack(side="top", pady=5)
 
     # New button that will ask for a directory
-    inDirButton = Button(root, text="Select input directory") # TODO: add a command attribute for the button
+    inDirButton = Button(root, text="Select input directory", command=askInDirectory)
     inDirButton.pack(side="top", pady=10)
 
-    outDirLabel = Label(root, text="Exporting files to: " + outDir, wraplength=windowWidth)
+    outDirLabel = Label(root, text="Exporting files to: ", wraplength=windowWidth)
     outDirLabel.pack(side="top", pady=5)
 
-    outDirButton = Button(root, text="Select output directory")  # TODO: add a command attribute for the button
+    outDirButton = Button(root, text="Select output directory", command=askOutDirectory)
     outDirButton.pack(side="top", pady=10)
 
     root.mainloop()
