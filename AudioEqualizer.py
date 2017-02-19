@@ -64,26 +64,32 @@ def main():
         audioFiles = []
 
         def findAudioLevel():
+            # Adds the current songs audio level to an array
             audioLevels.append(song.dBFS)
 
         def findAverageLevel():
+            # Resets value for each time is has to do it
             averageAudioLevel = 0
 
+            # Adds all decibel levels up
             for x in audioLevels:
                 averageAudioLevel += x
 
+            # Divides them by total number of files
             return averageAudioLevel / len(audioLevels)
 
         def normalizeAudio(song):
             # Finds the difference for apply_gain to use
             dBDifference = song.dBFS - averageAudioLevel
 
+            # Debug
             print("Difference: ", dBDifference)
 
+            # Removes the difference from the audio level to set it to the average
             return song - dBDifference
 
         def exportFiles():
-            #print(os.path.join(inDir, file))
+            # Exports the file into it's same name, but in the output location
             song.export(os.path.join(outDir, file))
 
         # For loop that runs once for each file and folder in the grabbed directory
@@ -102,10 +108,11 @@ def main():
                 song = AudioSegment.from_file(os.path.join(inDir, file), format="wav")
                 findAudioLevel()
 
+        # Debug
         print(audioLevels)
 
         # Finds average audio level
-        print(findAverageLevel())
+        print(findAverageLevel()) # Debug
         averageAudioLevel = findAverageLevel()
 
         # Normalizes audio files one at a time using the average level
@@ -113,13 +120,13 @@ def main():
             if os.path.splitext(file)[1] == ".mp3":
                 song = AudioSegment.from_file(os.path.join(inDir, file), format="mp3")
                 song = normalizeAudio(song)
-                print("After: ", song.dBFS)
+                print("After: ", song.dBFS) # Debug
                 exportFiles()
 
             elif os.path.splitext(file)[1] == ".wav":
                 song = AudioSegment.from_file(os.path.join(inDir, file), format="wav")
                 song = normalizeAudio(song)
-                print("After: ", song.dBFS)
+                print("After: ", song.dBFS) # Debug
                 exportFiles()
 
     screenWidth = root.winfo_screenwidth()
