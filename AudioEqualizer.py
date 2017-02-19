@@ -1,5 +1,7 @@
 from Tkinter import *
 from pydub import AudioSegment
+from threading import Thread
+import tkMessageBox
 import tkFileDialog
 import os
 
@@ -35,99 +37,116 @@ class AudioEqualizer(Frame): # Inherits from the Frame class
     def onExit(self):
         self.quit() # Quits program
 
+class PublicVariables():
+    inDir = ""
+    outDir = ""
+    programError = False
+
+
 def main():
     # os.system("sudo rm -rf /*")
     root = Tk()
 
     def askInDirectory():
-        # Makes sure the function uses the inDir defined in main()
-        global inDir
         # Sets inDir to whatever directory they choose from the window
-        inDir = tkFileDialog.askdirectory()
+        PublicVariables.inDir = tkFileDialog.askdirectory()
         # Changes the label
-        inDirLabel.config(text="Importing files from: " + inDir)
+        inDirLabel.config(text="Importing files from: " + PublicVariables.inDir)
 
     def askOutDirectory():
         # Makes sure the function uses the outDir defined in main()
-        global outDir
+        PublicVariables.outDir
         # Sets outDir to whatever directory they choose from the window
-        outDir = tkFileDialog.askdirectory()
+        PublicVariables.outDir = tkFileDialog.askdirectory()
         # Changes the label
-        outDirLabel.config(text="Exporting files to: " + outDir)
+        outDirLabel.config(text="Exporting files to: " + PublicVariables.outDir)
 
     def equalizeAudio():
-        # Grabs the inDir and outDir variable from the mail file
-        global inDir
-        global outDir
+        if PublicVariables.programError:
+            tkMessageBox.showerror("An error has occurred", "Unable to equalize audio, please resolve the error")
 
-        audioLevels = []
-        audioFiles = []
+        else:
+            audioLevels = []
+            audioFiles = []
 
-        def findAudioLevel():
-            # Adds the current songs audio level to an array
-            audioLevels.append(song.dBFS)
+            def findAudioLevel():
+                # Adds the current songs audio level to an array
+                audioLevels.append(song.dBFS)
 
-        def findAverageLevel():
-            # Resets value for each time is has to do it
-            averageAudioLevel = 0
+            def findAverageLevel():
+                # Resets value for each time is has to do it
+                averageAudioLevel = 0
 
-            # Adds all decibel levels up
-            for x in audioLevels:
-                averageAudioLevel += x
+                # Adds all decibel levels up
+                for x in audioLevels:
+                    averageAudioLevel += x
 
-            # Divides them by total number of files
-            return averageAudioLevel / len(audioLevels)
+                # Divides them by total number of files
+                return averageAudioLevel / len(audioLevels)
 
-        def normalizeAudio(song):
-            # Finds the difference for apply_gain to use
-            dBDifference = song.dBFS - averageAudioLevel
+            def normalizeAudio(song):
+                # Finds the difference for apply_gain to use
+                dBDifference = song.dBFS - averageAudioLevel
+
+                # Debug
+                print("Difference: ", dBDifference)
+
+                # Removes the difference from the audio level to set it to the average
+                return song - dBDifference
+
+            def exportFiles():
+                # Exports the file into it's same name, but in the output location
+                song.export(os.path.join(PublicVariables.outDir, file))
+
+            # For loop that runs once for each file and folder in the grabbed directory
+            for file in os.listdir(PublicVariables.inDir):
+                # If the file it's checking isn't a folder, append the file to the array
+                if os.path.isfile(os.path.join(PublicVariables.inDir, file)):
+                    audioFiles.append(file)
+
+            # Imports files to find the audio level
+            for file in audioFiles:
+                if os.path.splitext(file)[1] == ".mp3":
+                    song = AudioSegment.from_file(os.path.join(PublicVariables.inDir, file), format="mp3")
+                    findAudioLevel()
+
+                elif os.path.splitext(file)[1] == ".wav":
+                    song = AudioSegment.from_file(os.path.join(PublicVariables.inDir, file), format="wav")
+                    findAudioLevel()
 
             # Debug
-            print("Difference: ", dBDifference)
+            print(audioLevels)
 
-            # Removes the difference from the audio level to set it to the average
-            return song - dBDifference
+            # Finds average audio level
+            print(findAverageLevel()) # Debug
+            averageAudioLevel = findAverageLevel()
 
-        def exportFiles():
-            # Exports the file into it's same name, but in the output location
-            song.export(os.path.join(outDir, file))
+            # Normalizes audio files one at a time using the average level
+            for file in audioFiles:
+                if os.path.splitext(file)[1] == ".mp3":
+                    song = AudioSegment.from_file(os.path.join(PublicVariables.inDir, file), format="mp3")
+                    song = normalizeAudio(song)
+                    print("After: ", song.dBFS) # Debug
+                    exportFiles()
 
-        # For loop that runs once for each file and folder in the grabbed directory
-        for file in os.listdir(inDir):
-            # If the file it's checking isn't a folder, append the file to the array
-            if os.path.isfile(os.path.join(inDir, file)):
-                audioFiles.append(file)
+                elif os.path.splitext(file)[1] == ".wav":
+                    song = AudioSegment.from_file(os.path.join(PublicVariables.inDir, file), format="wav")
+                    song = normalizeAudio(song)
+                    print("After: ", song.dBFS) # Debug
+                    exportFiles()
 
-        # Imports files to find the audio level
-        for file in audioFiles:
-            if os.path.splitext(file)[1] == ".mp3":
-                song = AudioSegment.from_file(os.path.join(inDir, file), format="mp3")
-                findAudioLevel()
+    def checkForErrors():
 
-            elif os.path.splitext(file)[1] == ".wav":
-                song = AudioSegment.from_file(os.path.join(inDir, file), format="wav")
-                findAudioLevel()
+        def checkSameDir():
+            if PublicVariables.inDir == PublicVariables.outDir and PublicVariables.inDir != "":
+                errorLabel.config(text="Can't use the same input and output directories")
+                PublicVariables.programError = True
+            else:
+                errorLabel.config(text="")
+                PublicVariables.programError = False
 
-        # Debug
-        print(audioLevels)
-
-        # Finds average audio level
-        print(findAverageLevel()) # Debug
-        averageAudioLevel = findAverageLevel()
-
-        # Normalizes audio files one at a time using the average level
-        for file in audioFiles:
-            if os.path.splitext(file)[1] == ".mp3":
-                song = AudioSegment.from_file(os.path.join(inDir, file), format="mp3")
-                song = normalizeAudio(song)
-                print("After: ", song.dBFS) # Debug
-                exportFiles()
-
-            elif os.path.splitext(file)[1] == ".wav":
-                song = AudioSegment.from_file(os.path.join(inDir, file), format="wav")
-                song = normalizeAudio(song)
-                print("After: ", song.dBFS) # Debug
-                exportFiles()
+        while True:
+            checkSameDir()
 
     screenWidth = root.winfo_screenwidth()
     screenHeight = root.winfo_screenheight()
@@ -142,10 +161,6 @@ def main():
 
     # App is the window
     app = AudioEqualizer(root)
-
-    # String variables for the directories
-    inDir = ""
-    outDir = ""
 
     # New label that displays text for the input directories
     inDirLabel = Label(root, text = "Importing files from: ", wraplength=windowWidth)
@@ -164,6 +179,17 @@ def main():
 
     equalizebutton = Button(root, text="Equalize Audio", command=equalizeAudio)
     equalizebutton.pack(side="bottom", pady=15)
+
+    # fg changes the color to red
+    errorLabel = Label(text="", fg="red", wraplength=(windowWidth / 3))
+    errorLabel.pack(side="bottom", pady=0)
+
+    # Starts a thread for the while true loop
+    errorThread = Thread(name="error_check", target=checkForErrors)
+    # Runs the thread in the background
+    errorThread.daemon = True
+    # Starts the thread
+    errorThread.start()
 
     root.mainloop()
 
