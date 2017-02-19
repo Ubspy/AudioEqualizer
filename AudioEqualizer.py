@@ -5,6 +5,8 @@ import os
 
 # How python works: import *
 
+# TODO: Remove debug and formatting
+
 class AudioEqualizer(Frame): # Inherits from the Frame class
 
     # Called automatically when you initialize the class
@@ -20,11 +22,11 @@ class AudioEqualizer(Frame): # Inherits from the Frame class
         # Sets the window mane
         self.parent.title("Audio Equalizer")
 
-        # Adds a menubar
+        # Adds a menu bar
         menubar = Menu(self.parent)
         self.parent.config(menu=menubar) # Menu is a property of the Frame class
 
-        # Creats a new menu
+        # Creates a new menu
         fileMenu = Menu(self.parent)
 
         menubar.add_cascade(label="File", menu=fileMenu) # Adds file menu above
@@ -32,7 +34,6 @@ class AudioEqualizer(Frame): # Inherits from the Frame class
 
     def onExit(self):
         self.quit() # Quits program
-
 
 def main():
     # os.system("sudo rm -rf /*")
@@ -59,8 +60,31 @@ def main():
         global inDir
         global outDir
 
-        # Creates empty array for audio files
+        audioLevels = []
         audioFiles = []
+
+        def findAudioLevel():
+            audioLevels.append(song.dBFS)
+
+        def findAverageLevel():
+            averageAudioLevel = 0
+
+            for x in audioLevels:
+                averageAudioLevel += x
+
+            return averageAudioLevel / len(audioLevels)
+
+        def normalizeAudio(song):
+            # Finds the difference for apply_gain to use
+            dBDifference = song.dBFS - averageAudioLevel
+
+            print("Difference: ", dBDifference)
+
+            return song - dBDifference
+
+        def exportFiles():
+            #print(os.path.join(inDir, file))
+            song.export(os.path.join(outDir, file))
 
         # For loop that runs once for each file and folder in the grabbed directory
         for file in os.listdir(inDir):
@@ -68,17 +92,35 @@ def main():
             if os.path.isfile(os.path.join(inDir, file)):
                 audioFiles.append(file)
 
-        # TODO: Find average decibel level
-
-        song = ""
-
-        # Exports all the audio files
+        # Imports files to find the audio level
         for file in audioFiles:
             if os.path.splitext(file)[1] == ".mp3":
-                print(os.path.join(inDir, file))
                 song = AudioSegment.from_file(os.path.join(inDir, file), format="mp3")
-                # TODO: Edit decibel level
-                song.export(os.path.join(outDir, file))
+                findAudioLevel()
+
+            elif os.path.splitext(file)[1] == ".wav":
+                song = AudioSegment.from_file(os.path.join(inDir, file), format="wav")
+                findAudioLevel()
+
+        print(audioLevels)
+
+        # Finds average audio level
+        print(findAverageLevel())
+        averageAudioLevel = findAverageLevel()
+
+        # Normalizes audio files one at a time using the average level
+        for file in audioFiles:
+            if os.path.splitext(file)[1] == ".mp3":
+                song = AudioSegment.from_file(os.path.join(inDir, file), format="mp3")
+                song = normalizeAudio(song)
+                print("After: ", song.dBFS)
+                exportFiles()
+
+            elif os.path.splitext(file)[1] == ".wav":
+                song = AudioSegment.from_file(os.path.join(inDir, file), format="wav")
+                song = normalizeAudio(song)
+                print("After: ", song.dBFS)
+                exportFiles()
 
     screenWidth = root.winfo_screenwidth()
     screenHeight = root.winfo_screenheight()
