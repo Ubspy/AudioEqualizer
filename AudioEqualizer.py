@@ -40,7 +40,7 @@ class AudioEqualizer(Frame): # Inherits from the Frame class
 class PublicVariables():
     inDir = ""
     outDir = ""
-    programError = False
+    programError = 0
 
 
 def main():
@@ -62,7 +62,7 @@ def main():
         outDirLabel.config(text="Exporting files to: " + PublicVariables.outDir)
 
     def equalizeAudio():
-        if PublicVariables.programError:
+        if PublicVariables.programError > 0:
             tkMessageBox.showerror("An error has occurred", "Unable to equalize audio, please resolve the error")
 
         else:
@@ -137,16 +137,25 @@ def main():
 
     def checkForErrors():
 
+        def checkEmptyDir():
+            if PublicVariables.inDir == "" and PublicVariables.outDir == "":
+                errorLabel.config(text="Directories can't be empty")
+                PublicVariables.programError += 1
+
         def checkSameDir():
             if PublicVariables.inDir == PublicVariables.outDir and PublicVariables.inDir != "":
                 errorLabel.config(text="Can't use the same input and output directories")
-                PublicVariables.programError = True
-            else:
-                errorLabel.config(text="")
-                PublicVariables.programError = False
+                PublicVariables.programError += 1
+
 
         while True:
+            PublicVariables.programError = 0
+
+            checkEmptyDir()
             checkSameDir()
+
+            if PublicVariables.programError == 0:
+                errorLabel.config(text="")
 
     screenWidth = root.winfo_screenwidth()
     screenHeight = root.winfo_screenheight()
